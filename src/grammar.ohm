@@ -1,0 +1,24 @@
+DenialConstraint {
+  DenialConstraint = "¬" "(" PredicateList ")"
+  
+  PredicateList = Predicate ("^" Predicate)*
+  
+  Predicate = TupleRef operator TupleRef
+  
+  TupleRef = identifier "." tableName "." columnName
+  
+  operator = "==" | "<>" | "<=" | ">=" | "<" | ">"
+  
+  tableName = qualifiedName
+  
+  columnName = qualifiedName
+  
+  qualifiedName = (alnum | "_" | "." | "-")+
+  
+  identifier = "t" digit+
+  
+  space += comment
+  
+  comment = "//" (~"\n" any)* "\n"
+}
+

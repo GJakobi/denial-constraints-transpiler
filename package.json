@@ -1,0 +1,31 @@
+{
+  "name": "denial-constraints-transpiler",
+  "version": "0.1.0",
+  "description": "A transpiler that converts denial constraints to SQL queries",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "ts-node src/examples.ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "denial-constraints",
+    "sql",
+    "transpiler",
+    "data-quality",
+    "database"
+  ],
+  "author": "Gustavo Jakobi",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "ohm-js": "^17.1.0"
+  }
+}
+

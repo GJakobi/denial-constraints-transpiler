@@ -64,7 +64,23 @@ export class DCParser {
         } as Predicate;
       },
 
-      TupleRef(identifier, _dot1, tableName, _dot2, columnName) {
+      TupleRef_withExtension(
+        identifier,
+        _dot1,
+        tableBase,
+        _dot2,
+        tableExt,
+        _dot3,
+        columnName
+      ) {
+        return {
+          tupleId: identifier.sourceString,
+          tableName: tableBase.sourceString + "." + tableExt.sourceString,
+          columnName: columnName.sourceString,
+        } as TupleReference;
+      },
+
+      TupleRef_simple(identifier, _dot1, tableName, _dot2, columnName) {
         return {
           tupleId: identifier.sourceString,
           tableName: tableName.sourceString,

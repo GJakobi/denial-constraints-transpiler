@@ -31,6 +31,20 @@ The business rule "an employee with more hours worked should not receive a lower
 ¬(t₀.Role = t₁.Role ∧ t₀.Hours > t₁.Hours ∧ t₀.Bonus < t₁.Bonus)
 ```
 
+## Quick Start (TL;DR)
+
+If you already have Node.js installed:
+
+```bash
+cd denial-constraints-transpiler
+npm install
+npm run examples
+```
+
+That's it! You'll see 6 example denial constraints transpiled to SQL.
+
+Don't have Node.js? See the detailed [Getting Started](#getting-started) section below.
+
 ## Features
 
 - ✅ **Formal Grammar**: Closed grammar definition using Ohm.js
@@ -39,11 +53,68 @@ The business rule "an employee with more hours worked should not receive a lower
 - ✅ **Flexible Output**: Formatted or compact SQL output
 - ✅ **Well-Tested**: Examples based on real datasets and research papers
 
-## Installation
+## Getting Started
+
+### Prerequisites
+
+This project requires **Node.js** (version 14 or higher) and **npm** (Node Package Manager).
+
+### Installation
+
+1. **Clone the project**
+
+2. **Navigate to the project directory:**
+   ```bash
+   cd denial-constraints-transpiler
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+   
+### Running the Examples
+
+The easiest way to see the transpiler in action is to run the included examples:
 
 ```bash
-npm install
+npm run examples
 ```
+
+This will:
+- Parse 6 different denial constraints
+- Transpile each one to SQL
+- Display both the input DC and the generated SQL query
+- Show examples with different table formats (simple names and files with extensions like `.csv`)
+
+You should see output like:
+```sql
+Example 1: Unique Constraint
+Input DC: ¬(t0.hours.EmpID==t1.hours.EmpID^t0.hours.ProjID==t1.hours.ProjID)
+
+Generated SQL:
+SELECT
+  t0.EmpID,
+  t0.ProjID,
+  t1.EmpID,
+  t1.ProjID
+FROM
+  hours t0, hours t1
+WHERE
+  t0.EmpID = t1.EmpID
+  AND t0.ProjID = t1.ProjID
+;
+```
+
+### Building the Project
+
+To compile the TypeScript code to JavaScript:
+
+```bash
+npm run build
+```
+
+This creates a `dist/` directory with compiled JavaScript files that can be used in production.
 
 ## Usage
 
@@ -145,25 +216,17 @@ These examples are from real DC discovery algorithms:
 ¬(t0.airport.Country==t1.airport.Country^t0.airport.Timezone<>t1.airport.Timezone)
 ```
 
-## Running Examples
+## Available Commands
 
-Run the example transpilations:
-
-```bash
-npm run test
-```
-
-This will transpile several example DCs from research papers and show the generated SQL.
-
-## Building
-
-Compile TypeScript to JavaScript:
+All available npm commands:
 
 ```bash
-npm run build
+npm run examples    # Run example denial constraints and see SQL output
+npm run build      # Compile TypeScript to JavaScript (creates dist/ directory)
+npm run clean      # Remove compiled files (dist/ directory)
 ```
 
-This creates the `dist/` directory with compiled JavaScript and type definitions.
+**Note:** `npm run test` is an alias for `npm run examples` and does the same thing.
 
 ## Project Structure
 

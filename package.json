@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/index.ts",
+    "examples": "ts-node src/examples.ts",
     "test": "ts-node src/examples.ts",
     "clean": "rm -rf dist"
   },

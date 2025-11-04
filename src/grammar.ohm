@@ -5,15 +5,12 @@ DenialConstraint {
   
   Predicate = TupleRef operator TupleRef
   
-  TupleRef = identifier "." tableName "." columnName
+  TupleRef = identifier "." qualifiedName "." qualifiedName "." qualifiedName  -- withExtension
+           | identifier "." qualifiedName "." qualifiedName                    -- simple
   
   operator = "==" | "<>" | "<=" | ">=" | "<" | ">"
   
-  tableName = qualifiedName
-  
-  columnName = qualifiedName
-  
-  qualifiedName = (alnum | "_" | "." | "-")+
+  qualifiedName = (alnum | "_" | "-")+
   
   identifier = "t" digit+
   

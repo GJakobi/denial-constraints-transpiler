@@ -178,7 +178,6 @@ denial-constraints-transpiler/
 │   └── examples.ts         # Example usage
 ├── docs/
 │   ├── grammar-specification.md  # Formal grammar spec (EBNF + semantics)
-│   └── thesis-notes.md           # Notes for TCC development
 ├── package.json
 ├── tsconfig.json
 ├── LICENSE
@@ -206,7 +205,6 @@ The generated SQL queries have these properties:
 - **Self-joins**: Compares tuples from the same table
 - **WHERE clause**: Directly translates DC predicates
 - **SELECT clause**: Returns columns involved in violations
-- **Performance**: May require optimization for large datasets (see papers on indexing strategies)
 
 ## Transpiler Options
 
@@ -218,7 +216,7 @@ interface TranspilerOptions {
 }
 ```
 
-## Future Work
+<!-- ## Future Work
 
 Potential extensions for the thesis:
 
@@ -229,13 +227,7 @@ Potential extensions for the thesis:
 - [ ] Integration with DC discovery algorithms (DCFinder, FastDC)
 - [ ] Support for NULL handling
 - [ ] Batch processing of multiple DCs
-- [ ] Performance benchmarking framework
-
-## Related Tools
-
-- **Metanome**: DC and FD discovery platform
-- **DCFinder**: Efficient DC discovery algorithm
-- **FastDC**: High-performance DC discovery
+- [ ] Performance benchmarking framework -->
 
 ## License
 
@@ -249,4 +241,3 @@ Advisor: Prof. Eduardo Cunha de Almeida
 ## Acknowledgments
 
 This project is developed as part of a final thesis (TCC) on data quality and integrity constraints, supervised by Prof. Eduardo Almeida at UFPR.
-

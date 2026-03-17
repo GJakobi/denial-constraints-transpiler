@@ -1,7 +1,7 @@
 {
   "name": "denial-constraints-transpiler",
-  "version": "0.1.0",
-  "description": "A transpiler that converts denial constraints to SQL queries",
+  "version": "0.2.0",
+  "description": "A transpiler that converts denial constraints to SQL queries and runs them against PostgreSQL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -9,6 +9,7 @@
     "dev": "ts-node src/index.ts",
     "examples": "ts-node src/examples.ts",
     "test": "ts-node src/examples.ts",
+    "run-dcs": "ts-node src/run-dcs.ts",
     "clean": "rm -rf dist"
   },
   "keywords": [
@@ -16,17 +17,19 @@
     "sql",
     "transpiler",
     "data-quality",
-    "database"
+    "database",
+    "postgresql"
   ],
   "author": "Gustavo Jakobi",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "ohm-js": "^17.1.0"
+    "ohm-js": "^17.1.0",
+    "pg": "^8.12.0"
   }
 }
-

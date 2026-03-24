@@ -17,9 +17,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DC_FILE="$ROOT/examples/dcs/${DATASET}.txt"
 DATA_FILE="$ROOT/data/datasets/${DATASET}.csv"
 
-# Fallback: Hospital has uppercase H
+# Fallback: some dataset filenames are capitalized
 if [ ! -f "$DATA_FILE" ]; then
-  DATA_FILE="$ROOT/data/datasets/${DATASET^}.csv"
+  DATASET_CAP="$(echo "$DATASET" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+  DATA_FILE="$ROOT/data/datasets/${DATASET_CAP}.csv"
 fi
 
 echo "=================================================="

@@ -45,9 +45,11 @@ fi
 mkdir -p "$DATA_DIR/datasets" "$DATA_DIR/soundDCs"
 
 for NAME in "${NAMES[@]}"; do
+  NAME_CAP="$(echo "$NAME" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+
   # Dataset CSV (name may be Name.csv or name.csv)
   CSV_FILE=""
-  for f in "$TMP_DIR/datasets/${NAME}.csv" "$TMP_DIR/datasets/${NAME^}.csv"; do
+  for f in "$TMP_DIR/datasets/${NAME}.csv" "$TMP_DIR/datasets/${NAME_CAP}.csv"; do
     [ -f "$f" ] && CSV_FILE="$f" && break
   done
 
@@ -60,7 +62,7 @@ for NAME in "${NAMES[@]}"; do
 
   # Sound DCs file
   DC_FILE=""
-  for f in "$TMP_DIR/soundDCs/${NAME}" "$TMP_DIR/soundDCs/${NAME^}"; do
+  for f in "$TMP_DIR/soundDCs/${NAME}" "$TMP_DIR/soundDCs/${NAME_CAP}"; do
     [ -f "$f" ] && DC_FILE="$f" && break
   done
 

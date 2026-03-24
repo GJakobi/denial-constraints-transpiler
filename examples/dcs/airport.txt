@@ -1,6 +1,6 @@
 # Denial Constraints for dataset: airport
 # Source: DCValidity (https://github.com/nosocalgroc/DCValidity)
-# Original file: airport_raw.txt
+# Original file: airport
 # Format converted to: denial-constraints-transpiler
 #
 # Original format : ¬(t0.ColumnName(Type) op t1.ColumnName(Type) ^ ...)

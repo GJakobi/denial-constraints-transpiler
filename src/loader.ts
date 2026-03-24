@@ -46,6 +46,7 @@ function parseCSVLine(line: string): string[] {
  */
 function sanitizeIdentifier(name: string): string {
   return name
+    .replace(/\([^)]*\)$/, "") // strip trailing type annotation e.g. (String)
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, "_")
     .replace(/^[0-9]/, "_$&"); // identifiers cannot start with a digit

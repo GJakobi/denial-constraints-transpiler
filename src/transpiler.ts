@@ -122,10 +122,20 @@ export class DCTranspiler {
   }
 
   /**
-   * Build WHERE conditions from predicates
+   * Build WHERE conditions from predicates.
+   *
+   * A denial constraint universally quantifies over pairs of distinct tuples:
+   *   ∀ t, t' ∈ r, t ≠ t' → ¬(p₁ ∧ ... ∧ pₘ)
+   *
+   * The self-join must therefore exclude a row being paired with itself.
+   * We use _row_id < t1._row_id so each unordered pair {A,B} is checked
+   * exactly once (avoiding both self-matches and duplicate (A,B)/(B,A) pairs).
    */
   private buildWhereConditions(dc: DenialConstraint): string[] {
-    return dc.predicates.map(pred => this.predicateToSQL(pred));
+    const predicates = dc.predicates.map(pred => this.predicateToSQL(pred));
+    // Enforce t ≠ t': only compare distinct, ordered pairs of tuples
+    predicates.push('t0._row_id < t1._row_id');
+    return predicates;
   }
 
   /**

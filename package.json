@@ -10,6 +10,10 @@
     "examples": "ts-node src/examples.ts",
     "test": "ts-node src/examples.ts",
     "run-dcs": "ts-node src/run-dcs.ts",
+    "convert-dcs": "ts-node src/convert-dcs.ts",
+    "demo": "bash scripts/demo.sh",
+    "demo:tax": "bash scripts/demo.sh tax500k",
+    "download-data": "bash scripts/download-data.sh",
     "clean": "rm -rf dist"
   },
   "keywords": [

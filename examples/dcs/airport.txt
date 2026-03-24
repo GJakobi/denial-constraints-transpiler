@@ -1,0 +1,9 @@
+# Denial Constraints for dataset: airport
+# Source: DCValidity (https://github.com/nosocalgroc/DCValidity)
+# Original file: airport_raw.txt
+# Format converted to: denial-constraints-transpiler
+#
+# Original format : ¬(t0.ColumnName(Type) op t1.ColumnName(Type) ^ ...)
+# Converted format: ¬(t0.airport.columnname op t1.airport.columnname ^ ...)
+¬(t0.airport.ident == t1.airport.ident)
+¬(t0.airport.iso_country <> t1.airport.iso_country ^ t0.airport.iso_region == t1.airport.iso_region)

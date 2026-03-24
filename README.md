@@ -1,248 +1,226 @@
-# Denial Constraints to SQL Transpiler
+# Denial Constraints Transpiler
 
-A TypeScript-based transpiler that converts denial constraints (DCs) to SQL queries for data quality validation. This project is part of a final thesis on data consistency and integrity.
+A transpiler that converts **Denial Constraints (DCs)** into executable SQL queries and runs them against a PostgreSQL database to detect integrity constraint violations.
 
-## Overview
+This project is part of the undergraduate thesis *"From Discovery to Execution: A Denial Constraints Transpiler to SQL with Relational Database Integration"* — Gustavo Jakobi, BCC/UFPR, 2026.
 
-Denial constraints are a powerful formalism for expressing data dependencies and business rules. They generalize many traditional database constraints including:
+---
 
-- Functional Dependencies (FDs)
-- Unique Constraints
-- Order Dependencies
-- Complex Business Rules
+## What are Denial Constraints?
 
-This transpiler parses denial constraints and generates SQL self-join queries that can detect violations of these constraints.
-
-## Background
-
-Denial constraints express invalid states of data using predicates over tuple pairs. A DC has the form:
+A Denial Constraint (DC) is an integrity constraint expressed in first-order logic stating that no pair of tuples in a relation can simultaneously satisfy a given set of predicates [Chu et al., 2013]:
 
 ```
-φ: ∀t, t' ∈ r, ¬(p₁ ∧ p₂ ∧ ... ∧ pₘ)
+φ : ∀ t, t' ∈ r, ¬(p₁ ∧ p₂ ∧ ... ∧ pₘ)
 ```
 
-Where each predicate `pᵢ` compares attributes between tuples using operators: `=`, `≠`, `<`, `≤`, `>`, `≥`
+DCs unify several classical constraint types (functional dependencies, unique column combinations, order dependencies) under a single formalism.
 
-### Example
-
-The business rule "an employee with more hours worked should not receive a lower bonus than another employee with the same role" can be expressed as:
+### Syntax used in this project
 
 ```
-¬(t₀.Role = t₁.Role ∧ t₀.Hours > t₁.Hours ∧ t₀.Bonus < t₁.Bonus)
+¬(t0.tablename.column op t1.tablename.column ^ ...)
 ```
 
-## Quick Start (TL;DR)
+| Symbol | Meaning |
+|--------|---------|
+| `¬` | Denial (negation of the predicate conjunction) |
+| `^` | Conjunction (AND) |
+| `t0`, `t1` | Two tuple variables ranging over the same table |
+| `==` `<>` `<` `<=` `>` `>=` | Comparison operators |
 
-If you already have Node.js installed:
+**Example — same zip code must imply same state (from tax500k dataset):**
+```
+¬(t0.tax500k.zip == t1.tax500k.zip ^ t0.tax500k.state <> t1.tax500k.state)
+```
+
+**Generated SQL:**
+```sql
+SELECT t0.*, t1.*
+FROM tax500k t0, tax500k t1
+WHERE t0.zip = t1.zip
+  AND t0.state <> t1.state
+  AND t0._row_id < t1._row_id
+```
+
+---
+
+## Benchmark Datasets
+
+Datasets and pre-discovered Sound DCs come from the **DCValidity** repository:
+
+> NoSocAlgroc. *DCValidity: How and Why False Denial Constraints are Discovered*. GitHub, 2024.
+> https://github.com/nosocalgroc/DCValidity
+
+The pre-converted DC files in `examples/dcs/` were generated from the `soundDCs/` folder of that repository using `src/convert-dcs.ts`. The original DCValidity format uses type annotations (`ColumnName(Type)`) and no table name; the converter strips types, lowercases column names, and injects the table name.
+
+---
+
+## Quick Start (Docker — one command)
+
+**Requirements:** [Docker](https://www.docker.com/), [Node.js >= 18](https://nodejs.org/)
 
 ```bash
+# 1. Clone this repository
+git clone <repo-url>
 cd denial-constraints-transpiler
+
+# 2. Install npm dependencies
 npm install
-npm run examples
-```
 
-That's it! You'll see 6 example denial constraints transpiled to SQL.
-
-Don't have Node.js? See the detailed [Getting Started](#getting-started) section below.
-
-## Features
-
-- ✅ **Formal Grammar**: Closed grammar definition using Ohm.js
-- ✅ **Type-Safe**: Full TypeScript implementation with type definitions
-- ✅ **Standards-Compliant**: Generates standard SQL queries
-- ✅ **Flexible Output**: Formatted or compact SQL output
-- ✅ **Well-Tested**: Examples based on real datasets and research papers
-
-## Getting Started
-
-### Prerequisites
-
-This project requires **Node.js** (version 14 or higher) and **npm** (Node Package Manager).
-
-### Installation
-
-1. **Clone the project**
-
-2. **Navigate to the project directory:**
-   ```bash
-   cd denial-constraints-transpiler
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-   
-### Running the Examples
-
-The easiest way to see the transpiler in action is to run the included examples:
-
-```bash
-npm run examples
+# 3. Run the full demo (downloads data, starts PostgreSQL, runs DCs)
+npm run demo
 ```
 
 This will:
-- Parse 6 different denial constraints
-- Transpile each one to SQL
-- Display both the input DC and the generated SQL query
-- Show examples with different table formats (simple names and files with extensions like `.csv`)
+1. Start a PostgreSQL instance via Docker Compose
+2. Download the `airport` dataset from DCValidity (~5 MB)
+3. Load the dataset into PostgreSQL
+4. Run the 2 pre-converted Sound DCs against it
+5. Print the violations found
 
-You should see output like:
-```sql
-Example 1: Unique Constraint
-Input DC: ¬(t0.hours.EmpID==t1.hours.EmpID^t0.hours.ProjID==t1.hours.ProjID)
-
-Generated SQL:
-SELECT
-  t0.EmpID,
-  t0.ProjID,
-  t1.EmpID,
-  t1.ProjID
-FROM
-  hours t0, hours t1
-WHERE
-  t0.EmpID = t1.EmpID
-  AND t0.ProjID = t1.ProjID
-;
+To run the larger `tax500k` dataset (34 MB, uses first 15 000 rows as in the paper):
+```bash
+npm run demo:tax
 ```
 
-### Building the Project
+---
 
-To compile the TypeScript code to JavaScript:
+## Manual Setup
+
+### 1. Start PostgreSQL
 
 ```bash
-npm run build
+docker compose up -d
 ```
 
-This creates a `dist/` directory with compiled JavaScript files that can be used in production.
-
-## Usage
-
-### Basic Example
-
-```typescript
-import { transpileDC } from './src/index';
-
-const dc = '¬(t0.hours.Role==t1.hours.Role^t0.hours.Hours>t1.hours.Hours^t0.hours.Bonus<t1.hours.Bonus)';
-const sql = transpileDC(dc);
-
-console.log(sql);
+Or use an existing PostgreSQL instance by setting the standard `PG*` environment variables:
+```bash
+export PGHOST=localhost PGPORT=5432 PGDATABASE=dctest PGUSER=postgres PGPASSWORD=postgres
 ```
 
-Output:
-```sql
-SELECT
-  t0.Role, t0.Hours, t0.Bonus,
-  t1.Role, t1.Hours, t1.Bonus
-FROM
-  hours t0, hours t1
-WHERE
-  t0.Role = t1.Role
-  AND t0.Hours > t1.Hours
-  AND t0.Bonus < t1.Bonus
-;
-```
-
-### Advanced Usage
-
-```typescript
-import { DCParser, DCTranspiler } from './src/index';
-
-// Parse the DC
-const parser = new DCParser();
-const dc = parser.parse('¬(t0.employees.ID==t1.employees.ID)');
-
-// Validate
-parser.validate(dc);
-
-// Transpile with options
-const transpiler = new DCTranspiler({
-  formatOutput: true,
-  includeComments: true,
-  selectAllColumns: false
-});
-
-const sql = transpiler.transpile(dc);
-```
-
-## Grammar Specification
-
-The transpiler uses a **formal, closed grammar** for denial constraints. For the complete formal specification including EBNF notation, semantics, and theoretical properties, see [`docs/grammar-specification.md`](docs/grammar-specification.md).
-
-### Quick Reference (Ohm.js syntax)
-
-```
-DenialConstraint {
-  DenialConstraint = "¬" "(" PredicateList ")"
-  PredicateList    = Predicate ("^" Predicate)*
-  Predicate        = TupleRef operator TupleRef
-  TupleRef         = identifier "." tableName "." columnName
-  operator         = "==" | "<>" | "<=" | ">=" | "<" | ">"
-  tableName        = qualifiedName
-  columnName       = qualifiedName
-  qualifiedName    = (alnum | "_" | "." | "-")+
-  identifier       = "t" digit+
-}
-```
-
-### Grammar Elements
-
-- **¬**: Negation symbol (U+00AC)
-- **^**: Conjunction (AND) operator
-- **Operators**: `==` (equal), `<>` (not equal), `<=`, `>=`, `<`, `>`
-- **Tuple identifiers**: `t0`, `t1`, `t2`, ...
-- **Table/Column names**: Support alphanumeric, underscore, dot, hyphen
-
-### Documentation for Thesis
-
-- **Formal Specification**: See [`docs/grammar-specification.md`](docs/grammar-specification.md) for EBNF notation, formal semantics, and examples
-- **Thesis Notes**: See [`docs/thesis-notes.md`](docs/thesis-notes.md) for guidance on presenting the grammar in your TCC
-
-## Input Format
-
-Denial constraints should follow this format:
-
-```
-¬(t0.TableName.Column1 op t1.TableName.Column2 ^ t0.TableName.Column3 op t1.TableName.Column4)
-```
-
-### Examples from DCFinder
-
-These examples are from real DC discovery algorithms:
-
-```
-¬(t0.WDC_planets.csv.OrbitalRadius==t1.WDC_planets.csv.OrbitalRadius)
-¬(t0.WDC_planets.csv.Rings<>t1.WDC_planets.csv.Rings^t0.WDC_planets.csv.Type==t1.WDC_planets.csv.Type)
-¬(t0.airport.Country==t1.airport.Country^t0.airport.Timezone<>t1.airport.Timezone)
-```
-
-## Available Commands
-
-All available npm commands:
+### 2. Download benchmark data
 
 ```bash
-npm run examples    # Run example denial constraints and see SQL output
-npm run build      # Compile TypeScript to JavaScript (creates dist/ directory)
-npm run clean      # Remove compiled files (dist/ directory)
+npm run download-data                    # all datasets
+npm run download-data -- airport         # only airport
+npm run download-data -- tax500k         # only tax500k
 ```
 
-**Note:** `npm run test` is an alias for `npm run examples` and does the same thing.
+Data is saved to `data/datasets/` and `data/soundDCs/`.
+
+### 3. Convert DCs from DCValidity format (optional)
+
+The `examples/dcs/` files are already converted. To convert another dataset from DCValidity:
+
+```bash
+npm run convert-dcs -- \
+  --input  data/soundDCs/flights \
+  --table  flights \
+  --output examples/dcs/flights.txt
+```
+
+**DCValidity format:** `¬(t0.ColumnName(Type) op t1.ColumnName(Type) ^ ...)`
+**Transpiler format:** `¬(t0.tablename.columnname op t1.tablename.columnname ^ ...)`
+
+### 4. Run DCs against the database
+
+```bash
+npm run run-dcs -- \
+  --csv     data/datasets/airport.csv \
+  --table   airport \
+  --dcs     examples/dcs/airport.txt \
+  --verbose
+```
+
+**CLI flags:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--csv <path>` | CSV file to load into the database | - |
+| `--table <name>` | Table name to create in PostgreSQL | - |
+| `--dcs <path>` | File with one DC per line | - |
+| `--dc "<dc>"` | Single DC string passed directly | - |
+| `--limit <n>` | Load only the first N rows of the CSV | all |
+| `--verbose` | Print generated SQL and violations | false |
+| `--host` | PostgreSQL host | localhost |
+| `--port` | PostgreSQL port | 5432 |
+| `--db` | Database name | dctest |
+| `--user` | PostgreSQL user | postgres |
+| `--pass` | PostgreSQL password | "" |
+
+---
 
 ## Project Structure
 
 ```
 denial-constraints-transpiler/
 ├── src/
-│   ├── grammar.ohm         # Ohm.js grammar definition
-│   ├── types.ts            # TypeScript type definitions
-│   ├── parser.ts           # DC parser using Ohm.js
-│   ├── transpiler.ts       # SQL transpiler logic
-│   ├── index.ts            # Main entry point
-│   └── examples.ts         # Example usage
-├── docs/
-│   ├── grammar-specification.md  # Formal grammar spec (EBNF + semantics)
+│   ├── grammar.ohm        # Formal DC grammar (Ohm.js)
+│   ├── parser.ts          # DC parser — builds an AST from a DC string
+│   ├── transpiler.ts      # Converts AST to SQL violation-detection queries
+│   ├── runner.ts          # Executes generated SQL against PostgreSQL
+│   ├── loader.ts          # Loads CSV files into PostgreSQL tables
+│   ├── convert-dcs.ts     # Converts DCValidity format to transpiler format
+│   ├── run-dcs.ts         # CLI entrypoint
+│   ├── examples.ts        # In-memory transpilation examples (no DB needed)
+│   ├── index.ts           # Library exports
+│   └── types.ts           # TypeScript type definitions
+├── examples/
+│   └── dcs/
+│       ├── airport.txt    # Sound DCs for airport (converted from DCValidity)
+│       └── tax500k.txt    # Sound DCs for tax500k (converted from DCValidity)
+├── scripts/
+│   ├── demo.sh            # End-to-end demo script
+│   └── download-data.sh   # Downloads datasets from DCValidity
+├── docker-compose.yml     # PostgreSQL 16 service definition
 ├── package.json
-├── tsconfig.json
-├── LICENSE
-└── README.md
+└── tsconfig.json
 ```
+
+---
+
+## Library API
+
+```typescript
+import { transpileDC, DCRunner } from './src/index';
+
+// Transpile a DC to SQL (no database needed)
+const sql = transpileDC(
+  '¬(t0.tax500k.zip == t1.tax500k.zip ^ t0.tax500k.state <> t1.tax500k.state)'
+);
+console.log(sql);
+
+// Run a DC against PostgreSQL and retrieve violations
+const runner = new DCRunner({
+  host: 'localhost', port: 5432,
+  database: 'dctest', user: 'postgres', password: 'postgres'
+});
+const result = await runner.runDC('¬(t0.airport.ident == t1.airport.ident)');
+console.log(result.violationCount, result.violations);
+```
+
+---
+
+## npm Scripts Reference
+
+| Command | Description |
+|---------|-------------|
+| `npm run demo` | Full end-to-end demo with airport dataset |
+| `npm run demo:tax` | Full end-to-end demo with tax500k dataset |
+| `npm run download-data` | Download all DCValidity datasets |
+| `npm run run-dcs` | Run DCs via CLI (see flags above) |
+| `npm run convert-dcs` | Convert DCValidity DC file to transpiler format |
+| `npm run examples` | Transpile example DCs to SQL (no DB needed) |
+| `npm run build` | Compile TypeScript to JavaScript |
+| `npm run clean` | Remove compiled output |
+
+---
+
+## References
+
+- Chu, X., Ilyas, I. F., & Papotti, P. (2013). Discovering Denial Constraints. *Proceedings of the VLDB Endowment*, 6(13), 1498-1509.
+- NoSocAlgroc (2024). *DCValidity: How and Why False Denial Constraints are Discovered*. https://github.com/nosocalgroc/DCValidity
+- Martinenghi, D. (2025). Simplified SQL for Denial Constraint Checking.
+- Pena, L. et al. (2023). Mind Your Dependencies: DC-Based Query Optimization.
+- Pena, L. et al. (2021). FACET: Fast Approximate DC violation dEtecTion.

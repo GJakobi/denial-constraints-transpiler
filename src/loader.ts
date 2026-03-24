@@ -102,10 +102,9 @@ export async function loadCSV(
   const headers = parseCSVLine(allLines[0]);
   const safeHeaders = headers.map(sanitizeIdentifier);
 
-  // Collect sample rows for type inference (up to 100 rows)
-  const sampleSize = Math.min(101, allLines.length);
+  // Collect sample rows for type inference (scan the full file for reliability)
   const samples: string[][] = allLines
-    .slice(1, sampleSize)
+    .slice(1)
     .map(parseCSVLine);
 
   // ── 2. Infer column types ───────────────────────────────────────────────────

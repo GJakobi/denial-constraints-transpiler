@@ -132,8 +132,8 @@ export class DCTranspiler {
    * Convert a single predicate to SQL condition
    */
   private predicateToSQL(pred: Predicate): string {
-    const leftSide = `${pred.left.tupleId}.${pred.left.columnName}`;
-    const rightSide = `${pred.right.tupleId}.${pred.right.columnName}`;
+    const leftSide = `${pred.left.tupleId}."${pred.left.columnName}"`;
+    const rightSide = `${pred.right.tupleId}."${pred.right.columnName}"`;
     const sqlOperator = this.convertOperator(pred.operator);
 
     return `${leftSide} ${sqlOperator} ${rightSide}`;

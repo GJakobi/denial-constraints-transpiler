@@ -96,6 +96,10 @@ function printResult(
 
   if (error) {
     console.error(`  ❌ ERROR: ${error}`);
+    if (sql) {
+      console.log("  Generated SQL:");
+      sql.split("\n").forEach((l) => console.log("  " + l));
+    }
     return;
   }
 

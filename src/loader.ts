@@ -172,5 +172,8 @@ export async function loadCSV(
   console.log(
     `✓ Loaded ${inserted} rows into table "${safeTable}" from ${csvPath}`
   );
+  console.log(
+    `  Columns (${safeHeaders.length}): ${safeHeaders.join(", ")}`
+  );
   return inserted;
 }

@@ -46,12 +46,39 @@ echo ""
 
 # ── 3. Start PostgreSQL via Docker Compose ────────────────────────────────────
 echo "[3/5] Starting PostgreSQL (docker-compose)..."
-docker compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null
+
+# Check if Docker daemon is actually running before proceeding
+if ! docker info &>/dev/null; then
+  echo ""
+  echo "Error: Docker is not running."
+  echo "Please start Docker Desktop (or your Docker daemon) and try again."
+  exit 1
+fi
+
+if ! docker compose up -d --wait 2>/dev/null && ! docker-compose up -d 2>/dev/null; then
+  echo ""
+  echo "Error: Failed to start PostgreSQL via Docker Compose."
+  echo "Check the output above, then try: docker compose up"
+  exit 1
+fi
+
 echo "Waiting for PostgreSQL to be ready..."
+READY=0
 for i in $(seq 1 20); do
-  docker exec dc-transpiler-db pg_isready -U postgres -d dctest -q && break
+  if docker exec dc-transpiler-db pg_isready -U postgres -d dctest -q 2>/dev/null; then
+    READY=1
+    break
+  fi
   sleep 1
 done
+
+if [ "$READY" -eq 0 ]; then
+  echo ""
+  echo "Error: PostgreSQL did not become ready in time."
+  echo "Try running 'docker compose logs' to see what went wrong."
+  exit 1
+fi
+
 echo "PostgreSQL ready."
 echo ""
 

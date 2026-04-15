@@ -124,17 +124,23 @@ export class DCTranspiler {
   /**
    * Build WHERE conditions from predicates.
    *
-   * A denial constraint universally quantifies over pairs of distinct tuples:
+   * A denial constraint universally quantifies over ordered pairs of distinct tuples:
    *   ∀ t, t' ∈ r, t ≠ t' → ¬(p₁ ∧ ... ∧ pₘ)
    *
-   * The self-join must therefore exclude a row being paired with itself.
-   * We use _row_id < t1._row_id so each unordered pair {A,B} is checked
-   * exactly once (avoiding both self-matches and duplicate (A,B)/(B,A) pairs).
+   * Using t0._row_id < t1._row_id would silently miss violations in non-symmetric
+   * DCs (those containing <, <=, >, or >= predicates), because a violation may
+   * only exist when the tuple with the higher row_id appears as t0. Correct
+   * detection requires examining both orderings of every distinct pair.
+   *
+   * We therefore use t0._row_id <> t1._row_id, which excludes self-comparisons
+   * (t = t') while checking every ordered pair (t0, t1) with t0 ≠ t1.
+   * For symmetric DCs (== and <> only), both orderings are returned; for
+   * non-symmetric DCs, only the violating ordering is returned.
    */
   private buildWhereConditions(dc: DenialConstraint): string[] {
     const predicates = dc.predicates.map(pred => this.predicateToSQL(pred));
-    // Enforce t ≠ t': only compare distinct, ordered pairs of tuples
-    predicates.push('t0._row_id < t1._row_id');
+    // Enforce t ≠ t': exclude self-pairs, examine both orderings of each distinct pair
+    predicates.push('t0._row_id <> t1._row_id');
     return predicates;
   }
 

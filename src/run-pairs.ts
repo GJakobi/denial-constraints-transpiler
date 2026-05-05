@@ -31,6 +31,7 @@ interface Args {
   table?: string;
   dcsFile?: string;
   outDir: string;
+  limit?: number;
   dbConfig: DBConfig;
 }
 
@@ -55,6 +56,7 @@ function parseArgs(): Args {
       case '--table': args.table = next;                i++; break;
       case '--dcs':   args.dcsFile = path.resolve(next); i++; break;
       case '--out':   args.outDir  = path.resolve(next); i++; break;
+      case '--limit': args.limit   = parseInt(next, 10); i++; break;
       case '--host':  args.dbConfig.host     = next;              i++; break;
       case '--port':  args.dbConfig.port     = parseInt(next, 10); i++; break;
       case '--db':    args.dbConfig.database = next;              i++; break;
@@ -120,7 +122,7 @@ async function main() {
     const client = new Client(args.dbConfig);
     await client.connect();
     try {
-      await loadCSV(client, args.csv, args.table, { dropIfExists: true });
+      await loadCSV(client, args.csv, args.table, { dropIfExists: true, limit: args.limit });
     } finally {
       await client.end();
     }

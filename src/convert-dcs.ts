@@ -69,16 +69,21 @@ export function convertLine(line: string, tableName: string): string | null {
   // Must start with the DC negation symbol
   if (!trimmed.startsWith("¬")) return null;
 
-  // Step 1: strip type annotations like (Integer), (String), (Double)
-  // Pattern: any word in parentheses immediately after an identifier
-  let converted = trimmed.replace(/\((?:Integer|String|Double|Float|Long|Boolean)\)/g, "");
-
-  // Step 2: lowercase all column names that appear after t0./t1.
-  // Pattern: tN.ColumnName → tN.tablename.columnname
-  converted = converted.replace(
-    /\b(t\d+)\.([A-Za-z][A-Za-z0-9_\-]*)/g,
-    (_match, tupleId, colName) => {
-      return `${tupleId}.${tableName}.${colName.toLowerCase()}`;
+  // Step 1: rewrite each `tN.<col name>(<Type>)` token in one pass so that
+  // (i) the type annotation is removed, (ii) the column name is sanitized to
+  // match loader.ts#sanitizeIdentifier (lowercase, non-alphanumeric→underscore),
+  // and (iii) the table prefix is injected. Capturing here is the only way to
+  // keep multi-word column names (e.g. "Provider Number(String)") together —
+  // a separate token-based regex stops at the first space.
+  const converted = trimmed.replace(
+    /\b(t\d+)\.([^()^]+?)\((?:Integer|String|Double|Float|Long|Boolean)\)/g,
+    (_match, tupleId, rawCol) => {
+      const safeCol = rawCol
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")
+        .replace(/^[0-9]/, "_$&");
+      return `${tupleId}.${tableName}.${safeCol}`;
     }
   );
 

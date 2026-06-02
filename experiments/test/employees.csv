@@ -1,0 +1,7 @@
+id(Integer),salary(Integer),dept(String)
+1,50000,eng
+2,50000,eng
+3,60000,eng
+4,70000,sales
+5,70000,sales
+6,80000,sales

@@ -1,0 +1,5 @@
+# Experiment outputs — large, regenerable, not tracked.
+# Source scripts and aggregated summaries are tracked.
+results/
+results-*/
+.DS_Store

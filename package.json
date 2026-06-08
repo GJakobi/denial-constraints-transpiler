@@ -8,7 +8,7 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "examples": "ts-node src/examples.ts",
-    "test": "ts-node src/examples.ts",
+    "test": "jest",
     "run-dcs": "ts-node src/run-dcs.ts",
     "convert-dcs": "ts-node src/convert-dcs.ts",
     "demo": "bash scripts/demo.sh",
@@ -27,12 +27,16 @@
   "author": "Gustavo Jakobi",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.14.0",
     "@types/pg": "^8.11.6",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "node-sql-parser": "^5.4.0",
     "ohm-js": "^17.1.0",
     "pg": "^8.12.0"
   }

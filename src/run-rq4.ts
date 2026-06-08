@@ -72,12 +72,11 @@ const QUERIES: BenchmarkQuery[] = [
   },
   {
     name: "Q3",
-    description: "Multi-column SELECT: high earners with married status",
+    description: "Full-table scan: all taxpayers, multi-column projection",
     sql:
       "SELECT t.fname, t.lname, t.salary, t.areacode, t.state " +
       "FROM tax500k t " +
-      "INNER JOIN tax_zip z ON t.zip = z.zip " +
-      "WHERE t.salary > 100000",
+      "INNER JOIN tax_zip z ON t.zip = z.zip",
   },
 ];
 

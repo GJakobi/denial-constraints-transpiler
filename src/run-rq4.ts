@@ -4,14 +4,14 @@
  * RQ4 — Semantic Query Optimization via Join Elimination.
  *
  * Demonstrates and benchmarks the JoinEliminationRewriter on the tax500k
- * dataset. The experiment uses DC #10 (fname → gender), which holds with
+ * dataset. The experiment uses DC #8 (zip → state), which holds with
  * zero violations, to automatically eliminate a redundant lookup join.
  *
  * Experimental setup:
- *   1. Create tax_gender(fname, gender) UNIQUE(fname) from tax500k.
+ *   1. Create tax_zip(zip, state) UNIQUE(zip) from tax500k.
  *   2. Q  = SELECT t.fname, t.salary, t.state
  *            FROM tax500k t
- *            INNER JOIN tax_gender g ON t.fname = g.fname
+ *            INNER JOIN tax_zip z ON t.zip = z.zip
  *            WHERE t.salary > 50000
  *   3. Q' = JoinEliminationRewriter output (JOIN removed automatically).
  *   4. Correctness: verify COUNT(Q) == COUNT(Q').
@@ -35,15 +35,15 @@ import { DCParser } from "./parser";
 import { JoinEliminationRewriter } from "./je";
 import { DBConfig } from "./types";
 
-// ─── DC that encodes FD fname → gender on tax500k ────────────────────────────
+// ─── DC that encodes FD zip → state on tax500k (DC #8) ──────────────────────
 
 const DC_STRING =
-  "¬(t0.tax500k.fname == t1.tax500k.fname ^ t0.tax500k.gender <> t1.tax500k.gender)";
+  "¬(t0.tax500k.zip == t1.tax500k.zip ^ t0.tax500k.state <> t1.tax500k.state)";
 
 const Q_WITH_JOIN = `\
 SELECT t.fname, t.salary, t.state \
 FROM tax500k t \
-INNER JOIN tax_gender g ON t.fname = g.fname \
+INNER JOIN tax_zip z ON t.zip = z.zip \
 WHERE t.salary > 50000`;
 
 // ─── Argument parsing ────────────────────────────────────────────────────────
@@ -128,18 +128,18 @@ function computeStats(times: number[]) {
 // ─── Database setup ──────────────────────────────────────────────────────────
 
 async function setupLookupTable(pool: Pool, baseTable: string): Promise<void> {
-  console.log(`Setting up lookup table tax_gender from ${baseTable}...`);
-  await pool.query("DROP TABLE IF EXISTS tax_gender");
+  console.log(`Setting up lookup table tax_zip from ${baseTable}...`);
+  await pool.query("DROP TABLE IF EXISTS tax_zip");
   await pool.query(`
-    CREATE TABLE tax_gender AS
-    SELECT DISTINCT fname, gender FROM "${baseTable}"
+    CREATE TABLE tax_zip AS
+    SELECT DISTINCT zip, state FROM "${baseTable}"
   `);
   await pool.query(`
-    ALTER TABLE tax_gender
-    ADD CONSTRAINT pk_tax_gender PRIMARY KEY (fname)
+    ALTER TABLE tax_zip
+    ADD CONSTRAINT pk_tax_zip PRIMARY KEY (zip)
   `);
-  const res = await pool.query("SELECT COUNT(*) AS n FROM tax_gender");
-  console.log(`  tax_gender created: ${res.rows[0].n} distinct fname values`);
+  const res = await pool.query("SELECT COUNT(*) AS n FROM tax_zip");
+  console.log(`  tax_zip created: ${res.rows[0].n} distinct zip values`);
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ async function main() {
     if (!jeResult.applicable) {
       throw new Error(
         "JoinEliminationRewriter did not find the JOIN eligible for elimination. " +
-        "Check that tax_gender has a UNIQUE constraint on fname."
+        "Check that tax_zip has a UNIQUE constraint on zip."
       );
     }
 
@@ -225,7 +225,7 @@ async function main() {
         table: args.table,
         rowCount: parseInt(rowCount.rows[0].n, 10),
         dc: DC_STRING,
-        fd: "fname → gender",
+        fd: "zip → state",
         queryQ: Q_WITH_JOIN,
         queryQPrime: Q_OPTIMIZED,
         k: args.k,
